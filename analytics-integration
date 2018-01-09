@@ -1,6 +1,7 @@
 type: scanner
 scanner_name: analytics-integration
-image_name: registry.centos.org/pipeline-images/analytics-integration
+# image_name: registry.centos.org/pipeline-images/scanner-analytics-integration
+image_name: swordphilic/scanner-analytics-integration
 default_scan: analytics-integration
 scans: [
   { name: analytics-integration,
