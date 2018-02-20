@@ -13,17 +13,6 @@ import sys
 OUTDIR = "/scannot"
 INDIR = "/scanin"
 
-command = sys.argv[1]
-image_name = sys.argv[2]
-
-json_output = template_json_data(
-    "test_image_name", "ABCDEFG", "integration")
-
-json_output["Scan Results"] = {
-    "command": command,
-    "image_name": image_name,
-}
-
 
 class EmptyLabelException(Exception):
 
@@ -46,6 +35,29 @@ def configure_logging(name="integration-scanner"):
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     return logger
+
+
+def get_server_url(env_name="SERVER"):
+    """
+    Gets the SERVER env variable value
+    """
+    if not os.environ.get("SERVER", False):
+        raise ValueError(
+            "No value for SERVER env variable. Please re-run with: "
+            "SERVER=<url> IMAGE_NAME=<image> atomic scan [..]")
+    return os.environ.get("SERVER")
+
+
+def get_image_name(env_name="IMAGE_NAME"):
+    """
+    Gets the IMAGE env variable value
+    """
+    if not os.environ.get("IMAGE_NAME", False):
+        raise ValueError(
+            "No value for IMAGE_NAME env variable. Please re-run with: "
+            "SERVER=<url> IMAGE_NAME=<image> atomic scan [..]"
+        )
+    return os.environ.get("IMAGE_NAME")
 
 
 def connect_local_docker_socket(base_url="unix:///var/run/docker.sock"):
@@ -137,11 +149,14 @@ class Scanner(object):
                 ]
 
     def run(self):
+        pass
+        """
         for container in self.target_containers():
-            data = json_output
+            # TODO: Implement
             # Write scan results to json file
             out_path = os.path.join(OUTDIR, container)
             self.export_results(data, out_path)
+        """
 
     def export_results(self, data, out_path):
         """
@@ -156,5 +171,6 @@ class Scanner(object):
 
 if __name__ == "__main__":
     configure_logging()
+    command = sys.argv[1]
     scanner = Scanner()
     scanner.run()
