@@ -12,6 +12,9 @@ LABEL INSTALL="docker run -ti --rm --privileged -v /etc/atomic.d/:/host/etc/atom
 
 
 # Install python-docker-py to spin up container using scan script
-RUN yum -y update && yum -y install python-docker-py && yum clean all
+RUN yum -y update && \
+    yum -y install epel-release && \
+    yum -y install atomic python-docker-py && \
+    yum clean all
 
 ADD analytics-integration integration.py install.sh /
