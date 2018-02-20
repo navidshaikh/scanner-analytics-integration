@@ -2,16 +2,16 @@ type: scanner
 scanner_name: analytics-integration
 image_name: registry.centos.org/pipeline-images/scanner-analytics-integration
 default_scan: register
-custom_args: ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
+custom_args: ["-v", "/var/run/docker.sock:/var/run/docker.sock", "-e", "IMAGE_NAME=$IMAGE_NAME"]
 scans: [
   {
     name: register,
-    args: ["python", "integration.py", "register", "$IMAGE_NAME"],
+    args: ["python", "integration.py", "register"],
     description: "Registers image under test at analytics server for scanning."
   },
   {
     name: scan,
-    args: ["python", "integration.py", "scan", "$IMAGE_NAME"],
+    args: ["python", "integration.py", "scan"],
     description: "Scans image under test at analytics server."
   }
 ]
