@@ -2,7 +2,7 @@ type: scanner
 scanner_name: analytics-integration
 image_name: registry.centos.org/pipeline-images/scanner-analytics-integration
 default_scan: register
-custom_args: ["-v", "/var/run/docker.sock:/var/run/docker.sock", "-e", "IMAGE_NAME=$IMAGE_NAME"]
+custom_args: ["-v", "/var/run/docker.sock:/var/run/docker.sock", "-e", "IMAGE_NAME=$IMAGE_NAME", "-e", "SERVER=$SERVER"]
 scans: [
   {
     name: register,
