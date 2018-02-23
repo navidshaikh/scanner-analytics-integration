@@ -225,7 +225,7 @@ class AnalyticsIntegration(object):
         except ValueError as e:
             self.record_fatal_error(e)
             self.failure = True
-            self.return_on_failure()
+            return self.return_on_failure()
         else:
             self.failure = False
             # set the data right away for ensuring its exported
@@ -237,7 +237,7 @@ class AnalyticsIntegration(object):
         except Exception as e:
             self.record_fatal_error(e)
             self.failure = True
-            self.return_on_failure()
+            return self.return_on_failure()
         else:
             self.failure = False
 
@@ -253,7 +253,8 @@ class AnalyticsIntegration(object):
                 self.record_label(label, value)
         # this operation is clubbed with above for loop
         # intended to run after the loop is complete
-        self.return_on_failure()
+        if self.failure:
+            return self.return_on_failure()
 
         # if label retrieval is complete, verify the recorded labels
         self.verify_recorded_labels()
@@ -273,8 +274,9 @@ class AnalyticsIntegration(object):
                                    api=api,
                                    data=self.recorded_labels)
         if not status:
+            self.failure = True
             self.record_fatal_error(out)
-            self.return_on_failure()
+            return self.return_on_failure()
 
         # if there are no return on data failures, return True
         return self.return_on_success()
