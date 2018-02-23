@@ -3,8 +3,8 @@
 from Atomic import run as atomic_run
 
 from requests.compat import urljoin
+from datetime import datetime
 
-import datetime
 import docker
 import json
 import logging
@@ -83,7 +83,6 @@ def find_label(run_object, image, label):
     """
     For given image, return the value for label
     """
-
     label_value = run_object.get_label(label)
     if not label_value:
         raise EmptyLabelException(
@@ -147,7 +146,7 @@ def get_request(endpoint, api):
     pass
 
 
-def AnalyticsIntegration(object):
+class AnalyticsIntegration(object):
     """
     Analytics integrtion related tasks wrapped in this calls
     """
@@ -176,9 +175,9 @@ def AnalyticsIntegration(object):
         # the needed data to be logged in scanner output
         self.data = {}
         # the templated data this scanner will export
-        self.json_out = template_json_data(self.scanner,
-                                           self.scan_type,
-                                           container[1:])
+        self.json_out = self.template_json_data(self.scanner,
+                                                self.scan_type,
+                                                container[1:])
 
     def template_json_data(self, scanner, scan_type, uuid):
         """
@@ -205,7 +204,7 @@ def AnalyticsIntegration(object):
 
     def return_on_failure(self):
         if self.failure:
-            current_time = datetime.now.strftime("%Y-%m-%d-%H-%M-%S-%f")
+            current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
             self.json_out["Finished Time"] = current_time
             self.json_out["Successful"] = False
             self.json_out["Scan Results"] = self.data
@@ -264,6 +263,8 @@ def AnalyticsIntegration(object):
 
         if self.scan_type == "register":
             api = "/register"
+        elif self.scan_type == "scan":
+            api = "/scan"
         # TODO: add more cases for scan and report command
         else:
             api = "/register"
@@ -276,10 +277,10 @@ def AnalyticsIntegration(object):
             self.return_on_failure()
 
         # if there are no return on data failures, return True
-        return_on_success()
+        return self.return_on_success()
 
     def return_on_success(self):
-        current_time = datetime.now.strftime("%Y-%m-%d-%H-%M-%S-%f")
+        current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         self.json_out["Finished Time"] = current_time
         self.json_out["Successful"] = True
         self.json_out["Scan Results"] = self.data
@@ -327,13 +328,13 @@ class Scanner(object):
         os.makedirs(out_path)
 
         # result file name = "scanner-analytics-integration.json"
-        result_filename = os.path.join(self.out_path,
+        result_filename = os.path.join(out_path,
                                        self.scanner + ".json")
 
         print "Exporting result in %s" % result_filename
 
         with open(result_filename, "w") as f:
-            json.dump(output, f, indent=4, separators=(",", ":"))
+            json.dump(output, f, indent=4, separators=(",", ": "))
 
 
 if __name__ == "__main__":
