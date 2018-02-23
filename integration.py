@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 
-OUTDIR = "/scannot"
+OUTDIR = "/scanout"
 INDIR = "/scanin"
 
 
@@ -86,7 +86,7 @@ def find_label(run_object, image, label):
     label_value = run_object.get_label(label)
     if not label_value:
         raise EmptyLabelException(
-            "Image %s does not have % label configured." % (image, label)
+            "Image %s does not have %s label configured." % (image, label)
         )
     return label_value
 
