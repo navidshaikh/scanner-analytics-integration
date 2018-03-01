@@ -82,11 +82,11 @@ Now lets take a look at the contents of result file.
         "server_url": "http://localhost"
     },
     "Successful": false,
-    "Finished Time": "2018-03-01-09-47-23-186428",
-    "Summary": "Error: [\"('Connection aborted.', error(111, 'Connection refused'))\"]",
-    "Start Time": "2018-03-01-H-47-23",
+    "Finished Time": "2018-03-01-10-23-39-719301",
+    "Summary": "Error: [\"Could not send POST request to URL http://localhost/register, with {'email-ids': u'nshaikh@redhat.com,samuzzal@redhat.com', 'git-sha': u'46e443d', 'git-url': u'https://github.com/fabric8-analytics/f8a-server-backbone'} data.\\n('Connection aborted.', error(111, 'Connection refused'))\"]",
+    "Start Time": "2018-03-01-H-23-39",
     "Scanner": "scanner-analytics-integration"
-}
+
 ```
 
 The `"Scan Results"` field indicates, Labels data retrieved from image under test reports errors in `"Summary"` field.
