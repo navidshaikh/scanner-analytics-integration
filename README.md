@@ -1,11 +1,11 @@
-Atomic scanner: scanner-analytics-integration
----------------------------------------------
+# Atomic scanner: scanner-analytics-integration
+
 
 This is a container image scanner based on `atomic scan`. The goal of this
 scanner is integration with [fabric8-analytics server]([200~https://github.com/fabric8-analytics/f8a-server-backbone/). 
 The scanner reads the `Labels` of the image and triggers scan at server with data in Labels.
 
-Steps to use:
+### Steps to use:
 
 - Pull scanner Docker image from **registry.centos.org**:
 
@@ -32,7 +32,7 @@ IMAGE_NAME = Image under test
 SERVER = Fabric7 Analytics Server URL
 ```
 
-Output of the scanner:
+### Output of the scanner:
 
 - Upon successful execution of scanner (irrespective of the successful server connection), scanner output looks like
 ```
