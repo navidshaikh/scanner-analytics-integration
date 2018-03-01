@@ -22,7 +22,7 @@ $ atomic install registry.centos.org/pipeline-images/scanner-analytics-integrati
 - Run the scanner for a given image
 
 ```
-$sudo IMAGE_NAME=<image-to-scan> SERVER=<server-url> atomic scan --scanner analytics-integration $IMAGE_NAME
+$sudo IMAGE_NAME=<image-to-scan> SERVER=<server-url> atomic scan --scanner analytics-integration <image-to-scan>
 ```
 
 where
@@ -92,4 +92,6 @@ Now lets take a look at the contents of result file.
 The `"Scan Results"` field indicates, Labels data retrieved from image under test reports errors in `"Summary"` field.
 Whether connection to server was successful, is indicated by `"Successful"` field,
 here `false` as no server is running on `http://localhost` (given in scanner run command).
+
+
 
