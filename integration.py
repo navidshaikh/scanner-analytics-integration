@@ -128,8 +128,8 @@ def post_request(endpoint, api, data):
         requests.post(url, data)
     except requests.exceptions.RequestException as e:
         error = ("Could not send POST request to URL {0}, "
-                 "with {1} data.\n").format(url, str(data))
-        return False, error + str(e)
+                 "with data: {1}.").format(url, str(data))
+        return False, error + "Error: " + str(e)
     else:
         # TODO check for response code
         return True, ""
@@ -203,13 +203,44 @@ class AnalyticsIntegration(object):
     def record_label(self, name, value):
         self.recorded_labels[name] = value.strip()
 
+    def post_scanner_error(self):
+        """
+        Upon issues with input data to scanner, invoke /scanner-error POST API
+        """
+        # in case of SERVER env var is not give, we wont be able to even
+        # post the error to /scanner-error APIs
+        if not self.server_url:
+            msg = ("Can't report errors via /scanner-error API, "
+                   "as SERVER URL is not given in scanner command.")
+            return False, msg
+
+        post_data = {
+            "image-name": self.data.get("image_name", ""),
+            "email-ids": self.recorded_labels.get("email-ids", ""),
+            "error": self.errors,
+            }
+
+        api = "/scanner-error"
+
+        status, out = post_request(endpoint=self.server_url,
+                                   api=api,
+                                   data=post_data)
+        if not status:
+            return status, out
+        else:
+            return True, "Reported errors via /scanner-error POST API."
+
     def return_on_failure(self):
         if self.failure:
+            # report errors on analytics server before returning the scanner
+            status, out = self.post_scanner_error()
+            # in either case of whethere status=true/false, add note in Summary
+            # about status for reporting the errors via /scanner-error API
+            self.errors.append(out)
             current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
             self.json_out["Finished Time"] = current_time
             self.json_out["Successful"] = False
             self.json_out["Scan Results"] = self.data
-            " ".join
             self.json_out["Summary"] = "Error: %s" % str(self.errors)
             return False, self.json_out
 
