@@ -127,7 +127,6 @@ def post_request(endpoint, api, data):
     try:
         requests.post(url, data)
     except requests.exceptions.RequestException as e:
-        print e
         return False, str(e)
     else:
         # TODO check for response code
@@ -326,14 +325,11 @@ class Scanner(object):
         Export the JSON data in output_file
         """
         out_path = os.path.join(OUTDIR, container)
-        print "Creating dir: %s" % out_path
         os.makedirs(out_path)
 
         # result file name = "scanner-analytics-integration.json"
         result_filename = os.path.join(out_path,
                                        self.scanner + ".json")
-
-        print "Exporting result in %s" % result_filename
 
         with open(result_filename, "w") as f:
             json.dump(output, f, indent=4, separators=(",", ": "))
