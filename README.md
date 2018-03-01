@@ -83,7 +83,7 @@ Now lets take a look at the contents of result file.
     },
     "Successful": false,
     "Finished Time": "2018-03-01-10-23-39-719301",
-    "Summary": "Error: [\"Could not send POST request to URL http://localhost/register, with {'email-ids': u'nshaikh@redhat.com,samuzzal@redhat.com', 'git-sha': u'46e443d', 'git-url': u'https://github.com/fabric8-analytics/f8a-server-backbone'} data.\\n('Connection aborted.', error(111, 'Connection refused'))\"]",
+    "Summary": "Error: [\"Could not send POST request to URL https://localhost/register, with data: {'email-ids': u'nshaikh@redhat.com,samuzzal@redhat.com', 'git-sha': u'46e443d', 'git-url': u'https://github.com/fabric8-analytics/f8a-server-backbone'}.Error: ('Connection aborted.', error(111, 'Connection refused'))\", 'Could not send POST request to URL https://localhost/scanner-error, with data: {\\'email-ids\\': u\\'nshaikh@redhat.com,samuzzal@redhat.com\\', \\'image-name\\': \\'nshaikh/test_label\\', \\'error\\': [\"Could not send POST request to URL https://localhost/register, with data: {\\'email-ids\\': u\\'nshaikh@redhat.com,samuzzal@redhat.com\\', \\'git-sha\\': u\\'46e443d\\', \\'git-url\\': u\\'https://github.com/fabric8-analytics/f8a-server-backbone\\'}.Error: (\\'Connection aborted.\\', error(111, \\'Connection refused\\'))\"]}.Error: (\\'Connection aborted.\\', error(111, \\'Connection refused\\'))']",
     "Start Time": "2018-03-01-H-23-39",
     "Scanner": "scanner-analytics-integration"
 
@@ -94,4 +94,21 @@ Whether connection to server was successful, is indicated by `"Successful"` fiel
 here `false` as no server is running on `http://localhost` (given in scanner run command).
 
 
+### What scanner does / behavior ?
+ 1. For a given image under test, retrieves labels as follow
+    * git-url
+    * git-sha
+    * email-ids
 
+ 2. For a given `SERVER` URL, sends a `/register` POST REST API call with data as retrieved in 1.
+
+ 3. Upon failure with cases
+    * failing to retrieve (or absence of) any of 3 the Labels in image under test
+    * IMAGE_NAME env var not given in scanner command,
+
+    sends a `/scanner-error` POST REST API call to server reporting errors with data as follow
+    * image-image (if given, else "")
+    * email-ids   (if given, else "")
+    * errors      -  List of errors occured while running the scanner
+
+ 4. If `SERVER` URL is not given, scanner will record the errors in `"Summary"` field of local result file.

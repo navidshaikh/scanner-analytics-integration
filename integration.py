@@ -129,7 +129,7 @@ def post_request(endpoint, api, data):
     except requests.exceptions.RequestException as e:
         error = ("Could not send POST request to URL {0}, "
                  "with data: {1}.").format(url, str(data))
-        return False, error + "Error: " + str(e)
+        return False, error + " Error: " + str(e)
     else:
         # TODO check for response code
         return True, ""
