@@ -13,5 +13,5 @@
           description: A built image registry endpoints to be scanned.
     builders:
       - shell: |
-          sudo SERVER={server_url} IMAGE_NAME={imge_name} atomic scan --scanner=analytics-integration --verbose {image_name}
+          sudo SERVER={server_url} IMAGE_NAME={image_name} atomic scan --scanner=analytics-integration --verbose {image_name}
 
