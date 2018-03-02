@@ -2,7 +2,7 @@
     name: 'scanner-analytics-integration-invocation'
     description: |
       scanner-analytics-integration invocation job
-    node: master
+    node: gemini
     parameters:
       - string:
           name: server_url
