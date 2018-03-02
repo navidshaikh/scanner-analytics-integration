@@ -3,6 +3,7 @@
     description: |
       scanner-analytics-integration invocation job
     node: gemini
+    concurrent: True
     parameters:
       - string:
           name: server_url
