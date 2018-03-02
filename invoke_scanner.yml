@@ -1,0 +1,17 @@
+- job:
+    name: 'scanner-analytics-integration-invocation'
+    description: |
+      scanner-analytics-integration invocation job
+    node: gemini
+    concurrent: True
+    parameters:
+      - string:
+          name: server_url
+          description: Analytics base URL (no API endpoints should be given)
+      - string:
+          name: image_name
+          description: A built image registry endpoints to be scanned.
+    builders:
+      - shell: |
+          sudo SERVER={server_url} IMAGE_NAME={image_name} atomic scan --scanner=analytics-integration --verbose {image_name}
+
