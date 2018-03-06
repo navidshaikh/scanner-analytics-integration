@@ -14,8 +14,11 @@ import subprocess
 import sys
 
 
-OUTDIR = "/scanout"
-INDIR = "/scanin"
+#OUTDIR = "/scannot"
+#INDIR = "/scanin"
+
+OUTDIR = "/tmp"
+INDIR = "/tmp"
 
 
 class EmptyLabelException(Exception):
@@ -45,17 +48,21 @@ def get_server_url(env_name="SERVER"):
     """
     Gets the SERVER env variable value
     """
+    return "https://localhost/"
+    """
     if not os.environ.get("SERVER", False):
         raise ValueError(
             "No value for SERVER env variable. Please re-run with: "
             "SERVER=<url> IMAGE_NAME=<image> atomic scan [..]")
     return os.environ.get("SERVER")
+    """
 
 
 def get_image_name(env_name="IMAGE_NAME"):
     """
     Gets the IMAGE env variable value
     """
+    return "centos/centos:latest"
     if not os.environ.get("IMAGE_NAME", False):
         raise ValueError(
             "No value for IMAGE_NAME env variable. Please re-run with: "
@@ -83,12 +90,15 @@ def find_label(run_object, image, label):
     """
     For given image, return the value for label
     """
+    return "value"
+    """
     label_value = run_object.get_label(label)
     if not label_value:
         raise EmptyLabelException(
-            "Image %s does not have %s label configured." % (image, label)
+            "Image %s does not have % label configured." % (image, label)
         )
     return label_value
+    """
 
 
 def run_command(cmd, shell=True):
@@ -122,14 +132,15 @@ def post_request(endpoint, api, data):
              where status = True/False
                    error_if_any = string message on error, "" on success
     """
+    return True, ""
     url = urljoin(endpoint, api)
+    # return True, ""
     # TODO: check if we need API key in data
     try:
         requests.post(url, data)
     except requests.exceptions.RequestException as e:
-        error = ("Could not send POST request to URL {0}, "
-                 "with data: {1}.").format(url, str(data))
-        return False, error + " Error: " + str(e)
+        print e
+        return False, str(e)
     else:
         # TODO check for response code
         return True, ""
@@ -176,6 +187,7 @@ class AnalyticsIntegration(object):
         # the needed data to be logged in scanner output
         self.data = {}
         # the templated data this scanner will export
+        print container[1:]
         self.json_out = self.template_json_data(self.scanner,
                                                 self.scan_type,
                                                 container[1:])
@@ -203,51 +215,20 @@ class AnalyticsIntegration(object):
     def record_label(self, name, value):
         self.recorded_labels[name] = value.strip()
 
-    def post_scanner_error(self):
-        """
-        Upon issues with input data to scanner, invoke /scanner-error POST API
-        """
-        # in case of SERVER env var is not give, we wont be able to even
-        # post the error to /scanner-error APIs
-        if not self.server_url:
-            msg = ("Can't report errors via /scanner-error API, "
-                   "as SERVER URL is not given in scanner command.")
-            return False, msg
-
-        post_data = {
-            "image-name": self.data.get("image_name", ""),
-            "email-ids": self.recorded_labels.get("email-ids", ""),
-            "error": self.errors,
-            }
-
-        api = "/api/v1/scanner-error"
-
-        status, out = post_request(endpoint=self.server_url,
-                                   api=api,
-                                   data=post_data)
-        if not status:
-            return status, out
-        else:
-            return True, "Reported errors via /scanner-error POST API."
-
     def return_on_failure(self):
         if self.failure:
-            # report errors on analytics server before returning the scanner
-            status, out = self.post_scanner_error()
-            # in either case of whethere status=true/false, add note in Summary
-            # about status for reporting the errors via /scanner-error API
-            self.errors.append(out)
             current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
             self.json_out["Finished Time"] = current_time
             self.json_out["Successful"] = False
             self.json_out["Scan Results"] = self.data
+            " ".join
             self.json_out["Summary"] = "Error: %s" % str(self.errors)
             return False, self.json_out
 
     def verify_recorded_labels(self):
         pass
 
-    def run(self):
+    def _run(self):
         """
         Run the needed tasks for scanning container under test
         """
@@ -264,6 +245,7 @@ class AnalyticsIntegration(object):
             self.data["image_name"] = self.image_name
             self.data["server_url"] = self.server_url
 
+        """
         try:
             self.docker_client = connect_local_docker_socket()
         except Exception as e:
@@ -272,6 +254,7 @@ class AnalyticsIntegration(object):
             return self.return_on_failure()
         else:
             self.failure = False
+        """
 
         self.run_object.image = self.image_name
         for label in self.needed_labels_names:
@@ -294,11 +277,13 @@ class AnalyticsIntegration(object):
         # record the labels in data as well
         self.data.update(self.recorded_labels)
 
-        if self.scan_type in ["register", "scan"]:
-            api = "/api/v1/register"
-        # TODO: add case report command
+        if self.scan_type == "register":
+            api = "/register"
+        elif self.scan_type == "scan":
+            api = "/scan"
+        # TODO: add more cases for scan and report command
         else:
-            api = "/api/v1/register"
+            api = "/register"
 
         status, out = post_request(endpoint=self.server_url,
                                    api=api,
@@ -336,16 +321,16 @@ class Scanner(object):
         """
         # atomic scan will mount container's image onto
         # a rootfs and expose rootfs to scanner under the /scanin directory
-        return [_dir for _dir in os.listdir(INDIR) if
-                os.path.isdir(os.path.join(INDIR, _dir))
-                ]
+        # return [_dir for _dir in os.listdir(INDIR) if
+        #        os.path.isdir(os.path.join(INDIR, _dir))
+        #        ]
+
+        return ["/tmp/foo"]
 
     def run(self):
         for container in self.target_containers():
-
             per_scan_object = AnalyticsIntegration(container, self.scan_type)
-            status, output = per_scan_object.run()
-            print "Scanner execution status: %s" % status
+            _, output = per_scan_object._run()
 
             # Write scan results to json file
             out_path = os.path.join(OUTDIR, container)
@@ -356,11 +341,14 @@ class Scanner(object):
         Export the JSON data in output_file
         """
         out_path = os.path.join(OUTDIR, container)
-        os.makedirs(out_path)
+        print "Creating dir: %s" % out_path
+        # os.makedirs(out_path)
 
         # result file name = "scanner-analytics-integration.json"
         result_filename = os.path.join(out_path,
                                        self.scanner + ".json")
+
+        print "Exporting result in %s" % result_filename
 
         with open(result_filename, "w") as f:
             json.dump(output, f, indent=4, separators=(",", ": "))
