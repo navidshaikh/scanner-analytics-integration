@@ -125,7 +125,7 @@ def post_request(endpoint, api, data):
     url = urljoin(endpoint, api)
     # TODO: check if we need API key in data
     try:
-        requests.post(url, data)
+        requests.post(url, json.dumps(data), headers={"Content-Type": "application/json"})
     except requests.exceptions.RequestException as e:
         error = ("Could not send POST request to URL {0}, "
                  "with data: {1}.").format(url, str(data))
