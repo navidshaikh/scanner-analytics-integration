@@ -327,10 +327,10 @@ class AnalyticsIntegration(object):
         # if repository is registered for first time, no `last_scan_report`
         # key will be there
         if "last_scan_report" in resp:
-            self.json_out["Scan Results"] = self.data
+            self.json_out["Scan Results"] = resp["last_scan_report"]
         else:
             # `last_scan_report` is in response if it is subsequent call
-            self.json_out["Scan Results"] = resp["last_scan_report"]
+            self.json_out["Scan Results"] = self.data
 
         # return True and output data from scanner
         return True, self.json_out
