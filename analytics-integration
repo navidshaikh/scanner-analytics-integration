@@ -8,10 +8,5 @@ scans: [
     name: register,
     args: ["python", "integration.py", "register"],
     description: "Registers image under test at analytics server for scanning."
-  },
-  {
-    name: scan,
-    args: ["python", "integration.py", "scan"],
-    description: "Scans image under test at analytics server."
   }
 ]
