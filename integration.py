@@ -125,14 +125,17 @@ def post_request(endpoint, api, data):
     url = urljoin(endpoint, api)
     # TODO: check if we need API key in data
     try:
-        requests.post(url, json.dumps(data), headers={"Content-Type": "application/json"})
+        r = requests.post(
+            url,
+            json.dumps(data),
+            headers={"Content-Type": "application/json"})
     except requests.exceptions.RequestException as e:
         error = ("Could not send POST request to URL {0}, "
                  "with data: {1}.").format(url, str(data))
         return False, error + " Error: " + str(e)
     else:
         # TODO check for response code
-        return True, ""
+        return True, json.loads(r.text)
 
 
 def get_request(endpoint, api):
@@ -218,7 +221,7 @@ class AnalyticsIntegration(object):
             "image-name": self.data.get("image_name", ""),
             "email-ids": self.recorded_labels.get("email-ids", ""),
             "error": self.errors,
-            }
+        }
 
         api = "/api/v1/scanner-error"
 
@@ -300,24 +303,36 @@ class AnalyticsIntegration(object):
         else:
             api = "/api/v1/register"
 
-        status, out = post_request(endpoint=self.server_url,
-                                   api=api,
-                                   data=self.recorded_labels)
+        status, resp = post_request(endpoint=self.server_url,
+                                    api=api,
+                                    data=self.recorded_labels)
         if not status:
             self.failure = True
-            self.record_fatal_error(out)
+            self.record_fatal_error(resp)
             return self.return_on_failure()
 
         # if there are no return on data failures, return True
-        return self.return_on_success()
+        return self.return_on_success(resp)
 
-    def return_on_success(self):
+    def return_on_success(self, resp):
+        """
+        Process output of scanner after successful POST call to server
+        """
+        self.json_out["Successful"] = True
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         self.json_out["Finished Time"] = current_time
-        self.json_out["Successful"] = True
-        self.json_out["Scan Results"] = self.data
-        self.json_out["Summary"] = (
-            "Completed scan with data mentioned in Scan Results.")
+        self.json_out["Summary"] = resp.get(
+            "summary",
+            "Check Scan Results for detailed report.")
+        # if repository is registered for first time, no `last_scan_report`
+        # key will be there
+        if "last_scan_report" in resp:
+            self.json_out["Scan Results"] = self.data
+        else:
+            # `last_scan_report` is in response if it is subsequent call
+            self.json_out["Scan Results"] = resp["last_scan_report"]
+
+        # return True and output data from scanner
         return True, self.json_out
 
 
@@ -345,7 +360,7 @@ class Scanner(object):
 
             per_scan_object = AnalyticsIntegration(container, self.scan_type)
             status, output = per_scan_object.run()
-            print "Scanner execution status: %s" % status
+            print ("Scanner execution status: %s" % status)
 
             # Write scan results to json file
             out_path = os.path.join(OUTDIR, container)
