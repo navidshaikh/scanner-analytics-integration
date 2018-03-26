@@ -187,7 +187,7 @@ class AnalyticsIntegration(object):
         """
         Populate and return a template standard json data out for scanner.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d-H-%M-%S")
+        current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         json_out = {
             "Start Time": current_time,
             "Successful": False,
@@ -321,16 +321,18 @@ class AnalyticsIntegration(object):
         self.json_out["Successful"] = True
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         self.json_out["Finished Time"] = current_time
-        self.json_out["Summary"] = resp.get(
-            "summary",
-            "Check Scan Results for detailed report.")
         # if repository is registered for first time, no `last_scan_report`
         # key will be there
         if "last_scan_report" in resp:
-            self.json_out["Scan Results"] = resp["last_scan_report"]
+            self.json_out["Scan Results"] = resp
+            self.json_out["Summary"] = (
+                "Last scan report available in 'Scan Reslts' field.")
         else:
             # `last_scan_report` is in response if it is subsequent call
             self.json_out["Scan Results"] = self.data
+            self.json_out["Summary"] = (
+                "Registered repository for scan, "
+                "report will be availble in next run after some time.")
 
         # return True and output data from scanner
         return True, self.json_out
