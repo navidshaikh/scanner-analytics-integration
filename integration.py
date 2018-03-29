@@ -326,7 +326,7 @@ class AnalyticsIntegration(object):
         if "last_scan_report" in resp:
             self.json_out["Scan Results"] = resp
             self.json_out["Summary"] = (
-                "Last scan report available in 'Scan Reslts' field.")
+                "Last scan report available in 'Scan Results' field.")
         else:
             # `last_scan_report` is in response if it is subsequent call
             self.json_out["Scan Results"] = self.data
