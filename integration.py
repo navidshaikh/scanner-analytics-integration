@@ -346,6 +346,7 @@ class Scanner(object):
     def __init__(self, scan_type):
         self.scan_type = scan_type
         self.scanner = "scanner-analytics-integration"
+        self.result_file = "analytics_scanner_results.json"
 
     def target_containers(self):
         """
@@ -376,8 +377,7 @@ class Scanner(object):
         os.makedirs(out_path)
 
         # result file name = "scanner-analytics-integration.json"
-        result_filename = os.path.join(out_path,
-                                       self.scanner + ".json")
+        result_filename = os.path.join(out_path, self.result_file)
 
         with open(result_filename, "w") as f:
             json.dump(output, f, indent=4, separators=(",", ": "))
