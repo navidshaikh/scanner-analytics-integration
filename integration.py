@@ -134,8 +134,10 @@ def post_request(endpoint, api, data):
                  "with data: {1}.").format(url, str(data))
         return False, error + " Error: " + str(e)
     else:
-        # TODO check for response code
-        return True, json.loads(r.text)
+        if r.status_code == requests.codes.ok:
+            return True, json.loads(r.text)
+        else:
+            return True, "Returned non okay status code on POST request."
 
 
 def get_request(endpoint, api):
