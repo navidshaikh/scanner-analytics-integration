@@ -1,6 +1,6 @@
 FROM registry.centos.org/centos/centos:latest
 
-LABEL INSTALL='docker run -ti --rm --privileged -v /etc/atomic.d/:/host/etc/atomic.d/ $IMAGE sh /install.sh' \
+LABEL INSTALL='docker run --rm --privileged -v /etc/atomic.d/:/host/etc/atomic.d/ $IMAGE sh /install.sh' \
       name='Analytics integration atomic scanner' \
       description='Atomic scanner for integration of container image scanning with fabri8-analytics server.' \
       git-sha='1a27cc4d3c038a37698ef9547e77f730600768bf' \
