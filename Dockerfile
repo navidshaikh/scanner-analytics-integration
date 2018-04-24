@@ -15,7 +15,7 @@ RUN yum -y update && \
     yum -y install epel-release && \
     yum -y install atomic python-docker-py && \
     yum -y install git python-dateutil python2-pip &&\
-    pip install setuptools
+    pip install setuptools && \
     yum clean all
 
 ADD analytics-integration integration.py install.sh /
