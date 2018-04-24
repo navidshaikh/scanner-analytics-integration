@@ -233,7 +233,7 @@ class AnalyticsIntegration(object):
         """
         command = ["/bin/bash", SAASHERDER_PARSER, image]
         try:
-            output = self.run_command(command)
+            output = run_command(command)
         except subprocess.CalledProcessError as e:
             msg = "Error occurred processing saasherder for {}".format(image)
             msg = msg + "\n{}".format(e)
