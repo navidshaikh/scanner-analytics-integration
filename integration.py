@@ -137,7 +137,8 @@ def post_request(endpoint, api, data):
         if r.status_code == requests.codes.ok:
             return True, json.loads(r.text)
         else:
-            return True, "Returned non okay status code on POST request."
+            return False, "Returned {} status code on POST request.".format(
+                r.status_code)
 
 
 def get_request(endpoint, api):
@@ -167,7 +168,8 @@ class AnalyticsIntegration(object):
         self.scan_type = scan_type
         self.run_object = atomic_run.Run()
         # following are the labels must be present in image
-        self.needed_labels_names = ["git-url", "git-sha", "email-ids"]
+        # self.needed_labels_names = ["git-url", "git-sha", "email-ids"]
+        self.needed_labels_names = ["git-url", "git-sha"]
         # following three variables need to be processed later
         self.label_data = None
         self.image_name = None
