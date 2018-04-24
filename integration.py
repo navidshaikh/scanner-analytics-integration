@@ -272,8 +272,6 @@ class AnalyticsIntegration(object):
             self.data["image_name"] = self.image_name
             self.data["server_url"] = self.server_url
 
-        self.run_object.image = self.image_name
-
         # find git-url and git-sha using saasherder
         values = self.run_saasherder(self.image_name)
         if "git-url" not in values:
