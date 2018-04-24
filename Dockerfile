@@ -15,12 +15,12 @@ RUN yum -y update && \
     yum -y install epel-release && \
     yum -y install atomic python-docker-py && \
     yum -y install git python-dateutil python2-pip &&\
-    pip install setuptools && \
+    pip install --upgrade setuptools && \
     yum clean all
 
 ADD analytics-integration integration.py install.sh /
 
 ADD saasherder_parser /saasherder_parser
 WORKDIR /saasherder_parser
-RUN set-pre-requisite.sh
+RUN bash set-pre-requisite.sh
 WORKDIR /
