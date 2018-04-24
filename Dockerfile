@@ -14,12 +14,13 @@ LABEL INSTALL='docker run --rm --privileged -v /etc/atomic.d/:/host/etc/atomic.d
 RUN yum -y update && \
     yum -y install epel-release && \
     yum -y install atomic python-docker-py && \
-    yum -y install git python-setuptools python-dateutil &&\
+    yum -y install git python-dateutil python2-pip &&\
+    pip install setuptools
     yum clean all
 
 ADD analytics-integration integration.py install.sh /
 
-ADD saasherder_parser /
+ADD saasherder_parser /saasherder_parser
 WORKDIR /saasherder_parser
 RUN set-pre-requisite.sh
 WORKDIR /
