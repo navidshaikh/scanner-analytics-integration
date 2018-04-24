@@ -1,11 +1,8 @@
 #!/usr/bin/env python2
 
-from Atomic import run as atomic_run
-
 from requests.compat import urljoin
 from datetime import datetime
 
-import docker
 import json
 import logging
 import os
@@ -16,12 +13,13 @@ import sys
 
 OUTDIR = "/scanout"
 INDIR = "/scanin"
+SAASHERDER_PARSER = "/saasherder_parser/get_repo_details_from_image.sh"
 
 
-class EmptyLabelException(Exception):
+class SaasHerderRunException(Exception):
 
     def __init__(self, message):
-        super(EmptyLabelException, self).__init__(message)
+        super(SaasHerderRunException, self).__init__(message)
 
 
 def configure_logging(name="integration-scanner"):
@@ -64,31 +62,11 @@ def get_image_name(env_name="IMAGE_NAME"):
     return os.environ.get("IMAGE_NAME")
 
 
-def connect_local_docker_socket(base_url="unix:///var/run/docker.sock"):
-    """
-    Initiates local docker client connection
-    """
-    client = docker.Client(base_url=base_url)
-    return client
-
-
 def get_image_uuid(client, image_name):
     """
     Using passed docker client object, returns image uuid for image_name.
     """
     return client.inspect_image(image_name)["Id"].split(":")[-1]
-
-
-def find_label(run_object, image, label):
-    """
-    For given image, return the value for label
-    """
-    label_value = run_object.get_label(label)
-    if not label_value:
-        raise EmptyLabelException(
-            "Image %s does not have %s label configured." % (image, label)
-        )
-    return label_value
 
 
 def run_command(cmd, shell=True):
@@ -163,23 +141,22 @@ class AnalyticsIntegration(object):
         Initialize object variables specific to per container scanning
         """
         self.scanner = "scanner-analytics-integration"
+        self.register_api = "/api/v1/register"
         self.container = container
         # scan_type = [register, scan, get_report]
         self.scan_type = scan_type
-        self.run_object = atomic_run.Run()
         # following are the labels must be present in image
         # self.needed_labels_names = ["git-url", "git-sha", "email-ids"]
-        self.needed_labels_names = ["git-url", "git-sha"]
+        self.needed_params = ["git-url", "git-sha"]
+        self.git_url = None
+        self.git_sha = None
         # following three variables need to be processed later
-        self.label_data = None
         self.image_name = None
         self.server_url = None
         # This will contain the result/error data
         self.respone = None
         self.errors = []
         self.failure = True
-        # the labels needed for calling server APIs
-        self.recorded_labels = {}
         # the needed data to be logged in scanner output
         self.data = {}
         # the templated data this scanner will export
@@ -207,9 +184,6 @@ class AnalyticsIntegration(object):
     def record_fatal_error(self, error):
         self.errors.append(str(error))
 
-    def record_label(self, name, value):
-        self.recorded_labels[name] = value.strip()
-
     def post_scanner_error(self):
         """
         Upon issues with input data to scanner, invoke /scanner-error POST API
@@ -223,7 +197,6 @@ class AnalyticsIntegration(object):
 
         post_data = {
             "image-name": self.data.get("image_name", ""),
-            "email-ids": self.recorded_labels.get("email-ids", ""),
             "error": self.errors,
         }
 
@@ -251,8 +224,36 @@ class AnalyticsIntegration(object):
             self.json_out["Summary"] = "Error: %s" % str(self.errors)
             return False, self.json_out
 
-    def verify_recorded_labels(self):
-        pass
+    def run_saasherder(self, image):
+        """
+        Run saas herder parser on given image and find out
+        git-url and git-sha for image under test.
+        Returns None if failed to parse using saasherder
+        Returns dict = {"git_url": GIT_URL, "git_sha": GIT_SHA} on success
+        """
+        command = ["/bin/bash", SAASHERDER_PARSER, image]
+        try:
+            output = self.run_command(command)
+        except subprocess.CalledProcessError as e:
+            msg = "Error occurred processing saasherder for {}".format(image)
+            msg = msg + "\n{}".format(e)
+            print(msg)
+            return None
+        else:
+            # lets parse stdout
+            try:
+                # last 3 lines has git-url, git-sha and image-tag
+                # we want -2 and -3 indexed elements
+                lines = output.strip().split("\n")[-3:-1]
+            except Exception as e:
+                msg = "Error parsing saasherder output. {}".format(e)
+                msg = msg + "Output: " + output
+                return None
+
+            def f(x): return {x.split("=")[0], x.split("=")[-1]}
+            values = {}
+            [values.update(f(x)) for x in lines]
+            return values
 
     def run(self):
         """
@@ -271,45 +272,26 @@ class AnalyticsIntegration(object):
             self.data["image_name"] = self.image_name
             self.data["server_url"] = self.server_url
 
-        try:
-            self.docker_client = connect_local_docker_socket()
-        except Exception as e:
-            self.record_fatal_error(e)
-            self.failure = True
-            return self.return_on_failure()
-        else:
-            self.failure = False
-
         self.run_object.image = self.image_name
-        for label in self.needed_labels_names:
-            try:
-                value = find_label(self.run_object, self.image_name, label)
-            except EmptyLabelException as e:
-                self.record_fatal_error(e)
-                self.failure = True
-            else:
-                self.failure = False
-                self.record_label(label, value)
-        # this operation is clubbed with above for loop
-        # intended to run after the loop is complete
+
+        # find git-url and git-sha using saasherder
+        values = self.run_saasherder(self.image_name)
+        if "git-url" not in values:
+            self.record_fatal_error("Failed to get git-url for image.")
+            self.failure = True
+
+        if "git-sha" not in values:
+            self.record_fatal_error("Failed to get git-sha for image.")
+            self.failure = True
+
+        print values
+
         if self.failure:
             return self.return_on_failure()
 
-        # if label retrieval is complete, verify the recorded labels
-        self.verify_recorded_labels()
-
-        # record the labels in data as well
-        self.data.update(self.recorded_labels)
-
-        if self.scan_type in ["register", "scan"]:
-            api = "/api/v1/register"
-        # TODO: add case report command
-        else:
-            api = "/api/v1/register"
-
         status, resp = post_request(endpoint=self.server_url,
-                                    api=api,
-                                    data=self.recorded_labels)
+                                    api=self.register_api,
+                                    data=values)
         if not status:
             self.failure = True
             self.record_fatal_error(resp)
